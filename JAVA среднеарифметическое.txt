@@ -1,0 +1,192 @@
+import java.util.Scanner;
+public class Neur {
+
+        double[] enter;
+        double[] hidden;
+        double[] hidden2;
+        double[] hidden3;
+        double   output;
+        double[][] wigthsEnter;
+        double[][] wigthsHidden;
+        double[][] wigthsHidden2;
+        double[]   wigthsOutput;
+
+
+    double paterns[][] = {
+            {2, 2},
+            {3, 3},
+            {1, 1},
+            {2, 3},
+            {4, 2},
+            {1, 4},
+            {2, 1},
+    };
+
+    double answers[] = {2, 3, 1, 2.5, 3, 2.5, 1.5};
+
+
+
+        Neur(){
+            enter = new double[paterns[0].length];
+            hidden = new double[paterns[0].length*15];
+            hidden2 = new double[hidden.length/5];
+            hidden3 = new double[5];
+            output = 0;
+            wigthsEnter = new double[enter.length][hidden.length];
+            wigthsHidden = new double[hidden.length][hidden2.length];
+            wigthsHidden2 = new double[hidden2.length][hidden3.length];
+            wigthsOutput = new double[hidden3.length];
+
+            init();
+
+            study();
+
+            Scanner scanner = new Scanner(System.in);
+            for ( int c = 0; c < 10; c++) {
+                System.out.println(" ¬ведите исходные данные:");
+                for (int i = 0; i < enter.length; i++) {
+                    double input = scanner.nextInt();
+                    enter[ i ] = input;
+                    countOuter();
+                }
+                System.out.println("¬аш ответ: " + output);
+            }
+        }
+
+
+        public void init(){
+            for (int i = 0; i < enter.length; i++){
+                for (int j = 0; j < hidden.length; j++){
+                    wigthsEnter[i][j] = Math.random()*0.3;
+                }
+            }
+
+            for (int i = 0; i < hidden.length; i++){
+                for (int j = 0; j < hidden2.length; j++){
+                    wigthsHidden[i][j] = Math.random()*0.3;
+                }
+            }
+
+            for (int i = 0; i < hidden2.length; i++){
+                for (int j = 0; j < hidden3.length; j++){
+                    wigthsHidden2[i][j] = Math.random()*0.3;
+                }
+            }
+            for (int i = 0; i < hidden3.length; i++){
+                wigthsOutput[i] = Math.random()*0.3;
+            }
+        }
+
+        public void countOuter(){
+
+            for (int i = 0; i < hidden.length; i++){
+                hidden[i] = 0;
+                for (int j = 0; j < enter.length; j++) {
+                    hidden[i] += enter[j] * wigthsEnter[j][i];
+                }
+                //   hidden[i] = Math.signum(hidden[i]);
+            }
+
+            for (int i = 0; i < hidden2.length; i++){
+                hidden2[i] = 0;
+                for (int j = 0; j < hidden.length; j++) {
+                    hidden2[i] += hidden[j] * wigthsHidden[j][i];
+                }
+                //    hidden2[i] = Math.signum(hidden2[i]);
+            }
+
+            for (int i = 0; i < hidden3.length; i++){
+                hidden3[i] = 0;
+                for (int j = 0; j < hidden2.length; j++) {
+                    hidden3[i] += hidden2[j] * wigthsHidden2[j][i];
+                }
+                //  hidden3[i] = Math.signum(hidden3[i]);
+            }
+
+            output = 0;
+            for (int i = 0; i < hidden3.length; i++){
+
+                output += hidden3[i] * wigthsOutput[i];
+            }
+            //   output = Math.signum(output);
+        }
+
+
+        public void study() {
+
+            double[] d1 = new double[hidden.length];
+            double[] d2 = new double[hidden2.length];
+            double[] d3 = new double[hidden3.length];
+            double gError = 0;
+
+            do {
+                gError = 0;
+
+                for (int p = 0; p < paterns.length; p++) {
+                    for (int i = 0; i < enter.length; i++)
+                        enter[ i ] = paterns[ p ][ i ];
+
+                    countOuter();
+                    double d = 0;
+                    d = answers[ p ] - output;
+                    gError = Math.abs(d);
+
+                    for (int i = 0; i < hidden3.length; i++) {
+                        d3[i] = 0;
+                        d3[ i ] = d * wigthsOutput[ i ];
+                    }
+                    for (int i = 0; i < hidden2.length; i++) {
+                        d2[ i ] = 0;
+                        for (int j = 0; j < hidden3.length; j++) {
+                            d2[ i ] += d3[ j ] * wigthsHidden2[ i ][ j ];
+                        }
+                    }
+                    for (int i = 0; i < hidden.length; i++) {
+                        d1[ i ]=0;
+                        for (int j = 0; j < hidden2.length; j++) {
+                            d1[ i ] += d2[ j ] * wigthsHidden[ i ][ j ];
+                        }
+                    }
+
+                    for (int i = 0; i < hidden.length; i++) {
+                        for (int j = 0; j < enter.length; j++) {
+                            wigthsEnter[ j ][ i ] = wigthsEnter[ j ][ i ] + 0.01 * d1[ i ] * enter[ j ];// * hidden[i]*(1-hidden[i]);
+                        }
+                    }
+
+                    for (int i = 0; i < hidden2.length; i++) {
+                        for (int j = 0; j < hidden.length; j++) {
+                            wigthsHidden[ j ][ i ] = wigthsHidden[ j ][ i ] + 0.01 * d2[ i ] * hidden[j];// * hidden2[i]*(1-hidden2[i]);
+                        }
+                    }
+
+                    for (int i = 0; i < hidden3.length; i++) {
+                        for (int j = 0; j < hidden2.length; j++) {
+                            wigthsHidden2[ j ][ i ] = wigthsHidden2[ j ][ i ] + 0.01 * d3[ i ] *hidden2[j];// * hidden3[i] *(1 - hidden3[i]);
+                        }
+                    }
+
+                    for (int i = 0; i < hidden3.length; i++) {
+                        wigthsOutput[ i ] = wigthsOutput[ i ] + 0.01 * d  * hidden3[i];// * output * (1-output);
+                    }
+
+                }
+                System.out.println(gError);
+
+            }while (gError >0.001) ;
+        }
+    }
+
+и в main вызываешь
+
+
+ublic class Main {
+
+
+    public static void main(String[] arg){
+
+
+        Neur neur=new Neur();
+
+    }
+}
